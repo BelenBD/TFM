@@ -1,4 +1,11 @@
 #!/bin/bash
+#SBATCH -p long
+#SBATCH -n 8
+#SBATCH -J kraken
+#SBATCH --mem 32768
+#SBATCH -t 7-02:30:15   
+#SBATCH -o slurm/kraken.%j.out
+#SBATCH -e slurm/kraken.%j.err
 
 # Run Kraken2 on paired-end reads
 for read1 in reads/*R1_001_72nt.fastq.gz; do 
