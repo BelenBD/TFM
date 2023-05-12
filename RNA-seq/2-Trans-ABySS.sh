@@ -6,45 +6,47 @@
 #SBATCH -o slurm/transabyssBBD.%j.out
 #SBATCH -e slurm/transabyssBBD.%j.err 
 
-kmer1=21
-kmer2=29
-kmer3=39
-kmer4=59
+#!/bin/bash
 
-cd /mnt/lustre/home/belben01/transabyss-master/non-rRNA
-for read1 in $(ls | grep '_R1'); 
-do
-	echo $read1
-	sample_name=${read1%%_*}; 
-	echo $sample_name;
-	name1=test.k${kmer1}_${sample_name}
-	name2=test.k${kmer2}_${sample_name}
-	name3=test.k${kmer3}_${sample_name}
-	name4=test.k${kmer4}_${sample_name}
-	
-	assemblydir1=./${sample_name}/${name1}
-	assemblydir2=./${sample_name}/${name2}
-	assemblydir3=./${sample_name}/${name3}
-	assemblydir4=./${sample_name}/${name4}
-	finalassembly1=${assemblydir1}/${name1}-final.fa
-	finalassembly2=${assemblydir2}/${name2}-final.fa
-	finalassembly3=${assemblydir3}/${name3}-final.fa
-	finalassembly4=${assemblydir4}/${name4}-final.fa
-	
-	mergedassembly=./${sample_name}/${sample_name}_merged.fa
+# Set kmer sizes
+kmers=(21 29 39 59)
 
-	read2=$(echo $read1| sed 's/_R1/_R2/g');
-	echo $read2;
+# Set input and output directories
+input_dir=/mnt/lustre/home/belben01/transabyss-master/non-rRNA
+output_dir=/mnt/lustre/home/belben01/transabyss-master/non-rRNA/merged
 
+# Create output directory if it does not exist
+mkdir -p $output_dir
 
-	/mnt/lustre/home/belben01/transabyss-master/transabyss -k ${kmer1} --se ${read1} ${read2} --outdir ${assemblydir1} --name ${name1} --threads 2;
+# Loop through all read1 files in input directory
+for read1 in $input_dir/*_R1.fastq.gz; do
+    echo "Processing $read1..."
 
-	/mnt/lustre/home/belben01/transabyss-master/transabyss -k ${kmer2} --se ${read1} ${read2} --outdir ${assemblydir2} --name ${name2} --threads 2;
-	
-	/mnt/lustre/home/belben01/transabyss-master/transabyss -k ${kmer3} --se ${read1} ${read2} --outdir ${assemblydir3} --name ${name3} --threads 2;
-	
-	/mnt/lustre/home/belben01/transabyss-master/transabyss -k ${kmer4} --se ${read1} ${read2} --outdir ${assemblydir4} --name ${name4} --threads 2;
+    # Extract sample name from read1 file name
+    sample_name=$(basename $read1 | cut -d '_' -f 1)
 
-	/mnt/lustre/home/belben01/transabyss-master/transabyss-merge --mink ${kmer1} --maxk ${kmer4} --prefixes k${kmer1}. k${kmer2}. k${kmer3}. k${kmer4}. --out ${mergedassembly} ${finalassembly1} ${finalassembly2} ${finalassembly3} ${finalassembly4};
+    # Loop through all kmer sizes
+    for kmer in ${kmers[@]}; do
+        echo "Running transabyss with kmer size $kmer..."
 
-done;
+        # Set output directory and file names
+        assemblydir=$output_dir/${sample_name}_k${kmer}
+        finalassembly=${assemblydir}/final.fa
+
+        # Run transabyss with current kmer size
+        transabyss --se $read1 ${read1/_R1/_R2} --outdir $assemblydir --name ${sample_name}_k${kmer} --threads 2 -k $kmer
+
+        # Check if transabyss produced output file
+        if [ ! -f $finalassembly ]; then
+            echo "Error: transabyss did not produce output file"
+            exit 1
+        fi
+    done
+
+    # Set merged assembly file name
+    mergedassembly=$output_dir/${sample_name}_merged.fa
+
+    # Merge assemblies using transabyss-merge
+    transabyss-merge --mink ${kmers[0]} --maxk ${kmers[-1]} --prefixes ${kmers[@]/#/k} --out $mergedassembly ${output_dir}/${sample_name}_k*/final.fa
+done
+
