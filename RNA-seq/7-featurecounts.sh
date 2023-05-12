@@ -9,21 +9,10 @@
 
 cd /mnt/lustre/home/belben01/bwa-bam
 
-for file in $(ls| grep '.bam')
-	do
-		echo $file
-		sample_name=${file%%.bam*}
-		gffread /mnt/lustre/home/belben01/eggnogmapper/$sample_name/$sample_name.emapper.gff -F -T -o /mnt/lustre/home/belben01/bwa-bam/gffread/$sample_name.gtf
-	done
-
-
-cd /mnt/lustre/home/belben01/bwa-bam
-
-for file in $(ls | grep '.bam')
-	do
-		bam_file=${file}
-		echo $bam_file
-		sample_name=${file%%.bam*}
-		echo $sample_name
-		featureCounts -a /mnt/lustre/home/belben01/bwa-bam/gffread/$sample_name.gtf -o /mnt/lustre/home/belben01/featurecounts/$sample_name.txt $bam_file -t transcript -g em_target
-	done
+find . -name '*.bam' | while read -r bam_file; do
+    echo "$bam_file"
+    sample_name="${bam_file%%.bam*}"
+    echo "$sample_name"
+    gffread /mnt/lustre/home/belben01/eggnogmapper/"$sample_name"/"$sample_name".emapper.gff -F -T -o gffread/"$sample_name".gtf
+    featureCounts -a gffread/"$sample_name".gtf -o /mnt/lustre/home/belben01/featurecounts/"$sample_name".txt "$bam_file" -t transcript -g em_target
+done
