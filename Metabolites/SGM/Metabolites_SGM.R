@@ -80,7 +80,7 @@ dens_plot_all <- function(datos_orig, datos_imp, varnames) {
 varnames <- colnames(sgm.pca_df)
 dens_plot_all(originales, imputados, varnames)
 
-png("E:/Wineteractions/Results_GM_tf/Density_plots.png", width = 2000, height = 2000, res = 120)
+png("E:/Wineteractions/Results_SGM_tf/Density_plots_SGM.png", width = 2000, height = 2000, res = 120)
 dens_plot_all(originales, imputados, varnames)
 dev.off()
 
