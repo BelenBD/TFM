@@ -1,4 +1,5 @@
-## Master's thesis project: "Wine yeast community assembly: effects of regionality, agricultural management, and fermentative conditions on their composition and transcriptional regulation".
+# MASTER'S THESIS PROJECT:
+## "Wine yeast community assembly: effects of regionality, agricultural management, and fermentative conditions on their composition and transcriptional regulation".
 
 ### Belén Benítez Domínguez
 
